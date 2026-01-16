@@ -1,0 +1,89 @@
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: my_app_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - phoenix_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app1:
+    image: my_app:latest
+    container_name: phoenix_app1
+    environment:
+      - NODE_NAME=app1
+      - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
+      - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
+      - PHX_HOST=localhost
+      - PORT=4000
+      - CLUSTER_SECRET=my_cluster_secret
+      - PHX_SERVER=true
+    ports:
+      - "4000:4000"
+      - "14369:4369"
+      - "19000-19100:9000-9100"
+    networks:
+      - phoenix_net
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "bin/my_app eval 'MyApp.Release.migrate' && bin/my_app start"
+
+  app2:
+    image: my_app:latest
+    container_name: phoenix_app2
+    environment:
+      - NODE_NAME=app2
+      - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
+      - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
+      - PHX_HOST=localhost
+      - PORT=4000
+      - CLUSTER_SECRET=my_cluster_secret
+      - PHX_SERVER=true
+    ports:
+      - "4001:4000"
+      - "14370:4369"
+      - "19101-19201:9000-9100"
+    networks:
+      - phoenix_net
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "bin/my_app eval 'MyApp.Release.migrate' && bin/my_app start"
+
+  app3:
+    image: my_app:latest
+    container_name: phoenix_app3
+    environment:
+      - NODE_NAME=app2
+      - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
+      - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
+      - PHX_HOST=localhost
+      - PORT=4000
+      - CLUSTER_SECRET=my_cluster_secret
+      - PHX_SERVER=true
+    ports:
+      - "4002:4000"
+      - "14371:4369"
+      - "19301-19401:9000-9100"
+    networks:
+      - phoenix_net
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "bin/my_app eval 'MyApp.Release.migrate' && bin/my_app start"
+
+networks:
+  phoenix_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
