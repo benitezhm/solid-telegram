@@ -60,6 +60,20 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+config :oapi_open_ai,
+  # find it at https://platform.openai.com/account/api-keys
+  api_key: System.get_env("OPENAI_API_KEY"),
+  # optional, use when required by an OpenAI API beta, e.g.:
+  beta: "assistants=v1",
+  # optional, HTTP client defaults to HTTPoison, useful for mocking in tests
+  http_client: HTTPoisonMock,
+  # optional, passed to HTTPoison.Request options
+  http_options: [recv_timeout: 30_000]
+
+config :my_app, :open_ai,
+  global_assistant_id: System.get_env("OPENAI_GLOBAL_ASSISTANT_ID", ""),
+  global_vector_store_id: System.get_env("OPENAI_GLOBAL_VECTOR_STORE_ID", "")
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
