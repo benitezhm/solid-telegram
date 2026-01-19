@@ -63,10 +63,13 @@ config :phoenix, :json_library, Jason
 config :oapi_open_ai,
   # find it at https://platform.openai.com/account/api-keys
   api_key: System.get_env("OPENAI_API_KEY"),
+  # optional, other clients allow overriding via the OPENAI_API_URL/OPENAI_API_BASE environment variable,
+  # if unset the the default is https://api.openai.com/v1
+  # base_url: System.get_env("OPENAI_API_URL"),
   # optional, use when required by an OpenAI API beta, e.g.:
-  beta: "assistants=v1",
-  # optional, HTTP client defaults to HTTPoison, useful for mocking in tests
-  http_client: HTTPoisonMock,
+  http_headers: [
+    {"OpenAI-Beta", "assistants=v2"}
+  ],
   # optional, passed to HTTPoison.Request options
   http_options: [recv_timeout: 30_000]
 

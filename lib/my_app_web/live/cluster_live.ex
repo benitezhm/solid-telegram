@@ -1,6 +1,8 @@
 defmodule MyAppWeb.ClusterLive do
   use MyAppWeb, :live_view
 
+  alias MyApp.Services.OpenAI
+
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
@@ -38,7 +40,7 @@ defmodule MyAppWeb.ClusterLive do
   @impl true
   def handle_event("create_thread", %{"title" => title}, socket) do
     if String.trim(title) != "" do
-      thread_id = Ecto.UUID.generate()
+      {:ok, %{openai_thread_id: thread_id}} = OpenAI.create_thread()
 
       payload = %{
         id: thread_id,
@@ -96,6 +98,12 @@ defmodule MyAppWeb.ClusterLive do
         message: message,
         timestamp: DateTime.utc_now() |> DateTime.to_string()
       }
+
+      OpenAI.stream(%{
+        question: message,
+        openai_thread_id: socket.assigns.selected_thread,
+        payload: payload
+      })
 
       MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
     end

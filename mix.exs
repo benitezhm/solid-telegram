@@ -68,7 +68,7 @@ defmodule MyApp.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:plug_cowboy, "~> 2.5"},
-      {:oapi_open_ai, "~> 1.0"},
+      {:oapi_open_ai, "~> 1.0.1", override: true},
       {:libcluster, "~> 3.3"}
     ]
   end

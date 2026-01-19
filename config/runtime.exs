@@ -84,6 +84,23 @@ if config_env() == :prod do
       ]
     ]
 
+  config :oapi_open_ai,
+    # find it at https://platform.openai.com/account/api-keys
+    api_key: System.get_env("OPENAI_API_KEY"),
+    # optional, other clients allow overriding via the OPENAI_API_URL/OPENAI_API_BASE environment variable,
+    # if unset the the default is https://api.openai.com/v1
+    # base_url: System.get_env("OPENAI_API_URL"),
+    # optional, use when required by an OpenAI API beta, e.g.:
+    http_headers: [
+      {"OpenAI-Beta", "assistants=v2"}
+    ],
+    # optional, passed to HTTPoison.Request options
+    http_options: [recv_timeout: 30_000]
+
+  config :my_app, :open_ai,
+    global_assistant_id: System.get_env("OPENAI_GLOBAL_ASSISTANT_ID", ""),
+    global_vector_store_id: System.get_env("OPENAI_GLOBAL_VECTOR_STORE_ID", "")
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
