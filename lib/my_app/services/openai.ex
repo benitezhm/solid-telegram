@@ -21,22 +21,32 @@ defmodule MyApp.Services.OpenAI do
         )
         |> Stream.each(fn
           {:ok, %{event: "thread.message.completed", data: answer} = event} ->
+            # :timer.sleep(500)
             Logger.info("🔔 COMPLETED EVENT RECEIVED: #{inspect(event)}")
             {:ok, answer} = text(answer)
-            payload = Map.put(payload, :message, answer)
+
+            payload =
+              payload
+              |> Map.put(:message, answer)
+              |> Map.put(:from, "pmb-team@pickmybrain.com")
+              |> Map.put(:streaming_responses, %{})
 
             # broadcast message here
             MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
 
           {:ok, %{event: "thread.message.delta", data: %{delta: delta} = _answer} = _event} ->
+            # :timer.sleep(100)
             {:ok, delta} = text(delta)
             Logger.info("🔔 DELTA EVENT RECEIVED: #{inspect(delta)}")
 
-            MyApp.Broadcaster.broadcast(
-              "cluster:typing",
-              :user_typing,
-              payload |> Map.put(:message, delta)
-            )
+            payload =
+              payload
+              |> Map.put(:message, delta)
+              |> Map.put(:from, "pmb-team@pickmybrain.com")
+              |> Map.put(:is_stream, true)
+              |> Map.put(:timestamp, System.monotonic_time(:millisecond))
+
+            MyApp.Broadcaster.broadcast("cluster:typing", :stream_delta, payload)
 
           {:ok, _message} ->
             # MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)

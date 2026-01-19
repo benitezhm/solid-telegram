@@ -21,6 +21,7 @@ defmodule MyAppWeb.ClusterLive do
      |> assign(:nodes, MyApp.Broadcaster.cluster_nodes())
      |> assign(:current_node, MyApp.Broadcaster.current_node())
      |> assign(:typing_status, %{})
+     |> assign(:streaming_responses, %{})
      |> assign(:form, to_form(%{"message" => ""}))}
   end
 
@@ -69,6 +70,8 @@ defmodule MyAppWeb.ClusterLive do
      socket
      |> assign(:selected_thread, thread_id)
      |> assign(:messages, [])
+     |> assign(:typing_status, %{})
+     |> assign(:streaming_responses, %{})
      |> assign(:form, to_form(%{"message" => ""}))}
   end
 
@@ -140,7 +143,7 @@ defmodule MyAppWeb.ClusterLive do
     if payload.thread_id == socket.assigns.selected_thread do
       messages = [payload | socket.assigns.messages] |> Enum.take(50)
 
-      {:noreply, assign(socket, :messages, messages)}
+      {:noreply, assign(socket, :messages, messages) |> assign(:streaming_responses, %{})}
     else
       {:noreply, socket}
     end
@@ -164,6 +167,31 @@ defmodule MyAppWeb.ClusterLive do
   end
 
   @impl true
+  def handle_info({:stream_delta, payload}, socket) do
+    if payload.thread_id == socket.assigns.selected_thread do
+      streaming_responses = socket.assigns.streaming_responses
+      node_key = payload.from
+
+      # Get existing accumulated message or start fresh
+      existing = Map.get(streaming_responses, node_key, %{message: ""})
+
+      # Append the new delta to the accumulated message
+      accumulated_message = existing.message <> payload.message
+
+      updated_response =
+        payload
+        |> Map.put(:message, accumulated_message)
+        |> Map.put(:is_stream, true)
+
+      new_streaming_responses = Map.put(streaming_responses, node_key, updated_response)
+
+      {:noreply, assign(socket, :streaming_responses, new_streaming_responses)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -175,7 +203,7 @@ defmodule MyAppWeb.ClusterLive do
           </h1>
           <p class="text-purple-300 text-lg">Real-time Erlang Distribution & PubSub with Threads</p>
         </div>
-        
+
     <!-- Cluster Information Card -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-2xl p-6 mb-6 border border-blue-400">
           <div class="flex items-center justify-between mb-4">
@@ -223,7 +251,7 @@ defmodule MyAppWeb.ClusterLive do
             </div>
           </div>
         </div>
-        
+
     <!-- Threads Section -->
         <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl shadow-2xl p-6 mb-6 border border-indigo-400">
           <div class="flex items-center justify-between mb-4">
@@ -237,7 +265,7 @@ defmodule MyAppWeb.ClusterLive do
               ➕ New Thread
             </button>
           </div>
-          
+
     <!-- Create Thread Modal -->
           <%= if @show_create_thread do %>
             <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -250,7 +278,7 @@ defmodule MyAppWeb.ClusterLive do
                     name="title"
                     value={@thread_form[:title].value}
                     placeholder="Thread title..."
-                    class="w-full border-2 border-indigo-300 rounded-xl px-4 py-3 text-lg focus:outline-none focus:ring-4 focus:ring-indigo-300"
+                    class="w-full border-2 border-indigo-300 rounded-xl px-4 py-3 text-lg focus:outline-none focus:ring-4 focus:ring-indigo-300 text-black"
                     autocomplete="off"
                   />
 
@@ -273,7 +301,7 @@ defmodule MyAppWeb.ClusterLive do
               </div>
             </div>
           <% end %>
-          
+
     <!-- Threads List -->
           <%= if @threads == [] do %>
             <div class="text-center py-8">
@@ -319,7 +347,7 @@ defmodule MyAppWeb.ClusterLive do
             </div>
           <% end %>
         </div>
-        
+
     <!-- Message Input Card (only show if thread selected) -->
         <%= if @selected_thread do %>
           <div class="bg-gradient-to-r from-green-600 to-emerald-700 rounded-2xl shadow-2xl p-6 mb-6 border border-green-400">
@@ -352,8 +380,33 @@ defmodule MyAppWeb.ClusterLive do
               Messages will appear instantly on all connected nodes!
             </p>
           </div>
-          
-    <!-- Typing Indicators -->
+
+    <!-- AI Streaming Responses -->
+        <%!-- = if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do --%>
+        <%= if map_size(@streaming_responses) > 0 and @streaming_responses |> Map.values() |> List.first() |> Map.get(:from) != @current_node  do %>
+            <div class="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl shadow-2xl p-4 mb-6 border border-violet-400">
+              <div class="space-y-3">
+                <%= for {_node, response_data} <- @streaming_responses do %>
+                  <div class="bg-white/20 backdrop-blur rounded-xl p-4 border border-white/20">
+                    <div class="flex items-start gap-3">
+                      <span class="text-white font-bold text-sm flex-shrink-0">
+                        🤖 PMB AI Team
+                      </span>
+                      <div class="flex-1 min-w-0">
+                        <span class="text-white/80 text-xs block mb-2">pmb-team@pickmybrain.com</span>
+                        <span class="text-white font-medium break-words inline">
+                          {response_data.message}
+                        </span>
+                        <span class="text-violet-200 animate-pulse inline">▌</span>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+    <!-- User Typing Indicators -->
           <%= if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do %>
             <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl shadow-2xl p-4 mb-6 border border-amber-400">
               <div class="space-y-2">
@@ -376,7 +429,7 @@ defmodule MyAppWeb.ClusterLive do
               </div>
             </div>
           <% end %>
-          
+
     <!-- Messages Card -->
           <div class="bg-white rounded-2xl shadow-2xl p-6 border-2 border-purple-300">
             <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -437,7 +490,7 @@ defmodule MyAppWeb.ClusterLive do
             </p>
           </div>
         <% end %>
-        
+
     <!-- Footer Info -->
         <div class="mt-6 text-center">
           <p class="text-purple-300 text-sm">
