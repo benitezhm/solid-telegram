@@ -25,6 +25,7 @@ COPY priv priv
 # Copy application files
 COPY lib lib
 COPY config config
+COPY rel rel
 
 # Install and compile assets
 RUN mix assets.setup

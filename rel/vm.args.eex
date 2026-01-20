@@ -1,0 +1,11 @@
+## Customize flags given to the VM: https://www.erlang.org/doc/man/erl.html
+## -name and -setcookie are set via ERL_AFLAGS in env.sh
+
+## Increase number of concurrent ports/sockets
++Q 65536
+
+## Tweak GC to run more often
+-env ERL_FULLSWEEP_AFTER 10
+
+## Increase Erlang distribution buffer
++zdbbl 32768

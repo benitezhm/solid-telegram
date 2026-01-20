@@ -18,13 +18,16 @@ services:
   app1:
     image: my_app:latest
     container_name: phoenix_app1
+    hostname: app1
     environment:
-      - NODE_NAME=app1
+      - RELEASE_NODE=my_app@app1
+      - RELEASE_COOKIE=my_app_cookie
       - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
       - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
       - PHX_HOST=localhost
       - PORT=4000
       - CLUSTER_SECRET=my_cluster_secret
+      - CLUSTER_NODES=my_app@app1,my_app@app2,my_app@app3
       - PHX_SERVER=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
@@ -43,13 +46,16 @@ services:
   app2:
     image: my_app:latest
     container_name: phoenix_app2
+    hostname: app2
     environment:
-      - NODE_NAME=app2
+      - RELEASE_NODE=my_app@app2
+      - RELEASE_COOKIE=my_app_cookie
       - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
       - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
       - PHX_HOST=localhost
       - PORT=4000
       - CLUSTER_SECRET=my_cluster_secret
+      - CLUSTER_NODES=my_app@app1,my_app@app2,my_app@app3
       - PHX_SERVER=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
@@ -68,13 +74,16 @@ services:
   app3:
     image: my_app:latest
     container_name: phoenix_app3
+    hostname: app3
     environment:
-      - NODE_NAME=app3
+      - RELEASE_NODE=my_app@app3
+      - RELEASE_COOKIE=my_app_cookie
       - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
       - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
       - PHX_HOST=localhost
       - PORT=4000
       - CLUSTER_SECRET=my_cluster_secret
+      - CLUSTER_NODES=my_app@app1,my_app@app2,my_app@app3
       - PHX_SERVER=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}

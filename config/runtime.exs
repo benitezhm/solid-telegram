@@ -70,19 +70,60 @@ if config_env() == :prod do
     secret_key_base: secret_key_base
 
   # Configure libcluster
-  config :libcluster,
-    topologies: [
-      gossip: [
-        strategy: Cluster.Strategy.Gossip,
-        config: [
-          port: 45892,
-          if_addr: "0.0.0.0",
-          multicast_addr: "230.1.1.251",
-          multicast_ttl: 1,
-          secret: System.get_env("CLUSTER_SECRET") || "cluster_secret"
+  # Supports two strategies:
+  # 1. EPMD with static nodes (Docker Compose): Set CLUSTER_NODES=my_app@app1,my_app@app2,my_app@app3
+  # 2. Kubernetes DNS: Set DNS_CLUSTER_QUERY=my-app-headless.default.svc.cluster.local
+  cluster_nodes = System.get_env("CLUSTER_NODES")
+  dns_cluster_query = System.get_env("DNS_CLUSTER_QUERY")
+
+  topologies =
+    cond do
+      dns_cluster_query != nil ->
+        # Kubernetes DNS strategy
+        [
+          k8s_dns: [
+            strategy: Cluster.Strategy.Kubernetes.DNS,
+            config: [
+              service: dns_cluster_query,
+              application_name: "my_app",
+              polling_interval: 5_000
+            ]
+          ]
         ]
-      ]
-    ]
+
+      cluster_nodes != nil ->
+        # EPMD strategy with explicit node list (Docker Compose)
+        nodes =
+          cluster_nodes
+          |> String.split(",")
+          |> Enum.map(&String.to_atom/1)
+
+        [
+          epmd: [
+            strategy: Cluster.Strategy.Epmd,
+            config: [
+              hosts: nodes
+            ]
+          ]
+        ]
+
+      true ->
+        # Fallback to Gossip (local development)
+        [
+          gossip: [
+            strategy: Cluster.Strategy.Gossip,
+            config: [
+              port: 45892,
+              if_addr: "0.0.0.0",
+              multicast_addr: "230.1.1.251",
+              multicast_ttl: 1,
+              secret: System.get_env("CLUSTER_SECRET") || "cluster_secret"
+            ]
+          ]
+        ]
+    end
+
+  config :libcluster, topologies: topologies
 
   config :oapi_open_ai,
     # find it at https://platform.openai.com/account/api-keys

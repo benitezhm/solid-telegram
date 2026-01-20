@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phoenix
+  namespace: my-app
+  labels:
+    app: phoenix
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: phoenix
+  template:
+    metadata:
+      labels:
+        app: phoenix
+    spec:
+      containers:
+        - name: phoenix
+          image: my_app:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 4000
+              name: http
+            - containerPort: 4369
+              name: epmd
+          env:
+            # Dynamic node name using pod IP for Erlang clustering
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: RELEASE_NODE
+              value: "my_app@$(POD_IP)"
+            - name: RELEASE_DISTRIBUTION
+              value: "name"
+            - name: RELEASE_NAME
+              value: "my_app"
+            # ConfigMap values
+            - name: PHX_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: PHX_HOST
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: PORT
+            - name: PHX_SERVER
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: PHX_SERVER
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: DATABASE_URL
+            - name: DNS_CLUSTER_QUERY
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: DNS_CLUSTER_QUERY
+            - name: RELEASE_COOKIE
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: RELEASE_COOKIE
+            # App secrets
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: secret-key-base
+            - name: CLUSTER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: cluster-secret
+            # OpenAI secrets
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secrets
+                  key: api-key
+            - name: OPENAI_ASSISTANT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secrets
+                  key: assistant-id
+            - name: OPENAI_VECTOR_STORE_ID
+              valueFrom:
+                secretKeyRef:
+                  name: openai-secrets
+                  key: vector-store-id
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      # Run migrations on first pod startup
+      initContainers:
+        - name: migrate
+          image: my_app:latest
+          imagePullPolicy: Never
+          command: ["bin/my_app", "eval", "MyApp.Release.migrate"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: phoenix-config
+                  key: DATABASE_URL
+            - name: SECRET_KEY_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: secret-key-base
