@@ -3,13 +3,13 @@ defmodule Env.Vars do
     Application.get_env(:my_app, :env)
   end
 
-  def openai_global_assistant_id() do
+  def openai_assistant_id() do
     Application.get_env(:my_app, :open_ai)
-    |> Keyword.get(:global_assistant_id)
+    |> Keyword.get(:assistant_id)
   end
 
-  def openai_global_vector_store_id() do
+  def openai_vector_store_id() do
     Application.get_env(:my_app, :open_ai)
-    |> Keyword.get(:global_vector_store_id)
+    |> Keyword.get(:vector_store_id)
   end
 end

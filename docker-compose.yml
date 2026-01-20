@@ -27,8 +27,8 @@ services:
       - CLUSTER_SECRET=my_cluster_secret
       - PHX_SERVER=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_ASSISTANT_ID=${OPENAI_GLOBAL_ASSISTANT_ID}
-      - OPENAI_VECTOR_STORE_ID=${OPENAI_GLOBAL_VECTOR_STORE_ID}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
+      - OPENAI_VECTOR_STORE_ID=${OPENAI_VECTOR_STORE_ID}
     ports:
       - "4000:4000"
       - "14369:4369"
@@ -52,8 +52,8 @@ services:
       - CLUSTER_SECRET=my_cluster_secret
       - PHX_SERVER=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_ASSISTANT_ID=${OPENAI_GLOBAL_ASSISTANT_ID}
-      - OPENAI_VECTOR_STORE_ID=${OPENAI_GLOBAL_VECTOR_STORE_ID}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
+      - OPENAI_VECTOR_STORE_ID=${OPENAI_VECTOR_STORE_ID}
     ports:
       - "4001:4000"
       - "14370:4369"
@@ -69,7 +69,7 @@ services:
     image: my_app:latest
     container_name: phoenix_app3
     environment:
-      - NODE_NAME=app2
+      - NODE_NAME=app3
       - DATABASE_URL=ecto://postgres:postgres@db/my_app_dev
       - SECRET_KEY_BASE=SiWOfr/dI9d7Kd30vAIabavoTCNZ3rG5mTXMa4Ggl2xp+Yqz8Pb0ivDj+PcKGYnH
       - PHX_HOST=localhost
@@ -77,8 +77,8 @@ services:
       - CLUSTER_SECRET=my_cluster_secret
       - PHX_SERVER=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - OPENAI_ASSISTANT_ID=${OPENAI_GLOBAL_ASSISTANT_ID}
-      - OPENAI_VECTOR_STORE_ID=${OPENAI_GLOBAL_VECTOR_STORE_ID}
+      - OPENAI_ASSISTANT_ID=${OPENAI_ASSISTANT_ID}
+      - OPENAI_VECTOR_STORE_ID=${OPENAI_VECTOR_STORE_ID}
     ports:
       - "4002:4000"
       - "14371:4369"

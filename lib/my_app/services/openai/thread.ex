@@ -12,7 +12,7 @@ defmodule MyApp.Services.OpenAI.Thread do
     %OpenAi.Thread.CreateRequest{
       tool_resources: %OpenAi.Thread.CreateRequest.ToolResources{
         file_search: %{
-          "vector_store_ids" => [Env.Vars.openai_global_vector_store_id()]
+          "vector_store_ids" => [Env.Vars.openai_vector_store_id()]
         }
       }
     }

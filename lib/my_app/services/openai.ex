@@ -2,63 +2,82 @@ defmodule MyApp.Services.OpenAI do
   require Logger
   alias MyApp.Services.OpenAI
 
-  # defdelegate create_message(create_params, opts \\ []), to: __MODULE__.Messages, as: :create
+  def create_message(
+        %{
+          question: question_message,
+          openai_thread_id: openai_thread_id,
+          payload: _payload
+        } = params
+      ) do
+    openai_thread_id
+    |> OpenAi.Assistants.create_message(%OpenAi.Message.CreateRequest{
+      role: "user",
+      content: question_message
+    })
+    |> OpenAI.simplify_error()
+    |> case do
+      {:ok, _message} ->
+        stream(params)
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
 
   def stream(%{
         question: question_message,
         openai_thread_id: openai_thread_id,
         payload: payload
       }) do
-    {:ok, task_pid} =
-      Task.Supervisor.start_child(MyApp.TaskSupervisor, fn ->
-        %{
-          openai_thread_id: openai_thread_id,
-          ai_assistant_id: Env.Vars.openai_global_assistant_id()
-        }
-        |> OpenAI.Run.create(
-          stream: true,
-          tool_choice: %{type: "file_search"}
-        )
-        |> Stream.each(fn
-          {:ok, %{event: "thread.message.completed", data: answer} = event} ->
-            # :timer.sleep(500)
-            Logger.info("🔔 COMPLETED EVENT RECEIVED: #{inspect(event)}")
-            {:ok, answer} = text(answer)
+    Task.Supervisor.start_child(MyApp.TaskSupervisor, fn ->
+      %{
+        openai_thread_id: openai_thread_id,
+        ai_assistant_id: Env.Vars.openai_assistant_id()
+      }
+      |> OpenAI.Run.create(
+        stream: true,
+        tool_choice: %{type: "file_search"}
+      )
+      |> Stream.each(fn
+        {:ok, %{event: "thread.message.completed", data: answer} = _event} ->
+          # :timer.sleep(500)
+          # Logger.info("🔔 COMPLETED EVENT RECEIVED: #{inspect(event)}")
+          {:ok, answer} = text(answer)
 
-            payload =
-              payload
-              |> Map.put(:message, answer)
-              |> Map.put(:from, "pmb-team@pickmybrain.com")
-              |> Map.put(:streaming_responses, %{})
+          payload =
+            payload
+            |> Map.put(:message, answer)
+            |> Map.put(:from, "pmb-team@pickmybrain.com")
+            |> Map.put(:streaming_responses, %{})
 
-            # broadcast message here
-            MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
+          # broadcast message here
+          MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
 
-          {:ok, %{event: "thread.message.delta", data: %{delta: delta} = _answer} = _event} ->
-            # :timer.sleep(100)
-            {:ok, delta} = text(delta)
-            Logger.info("🔔 DELTA EVENT RECEIVED: #{inspect(delta)}")
+        {:ok, %{event: "thread.message.delta", data: %{delta: delta} = _answer} = _event} ->
+          # :timer.sleep(100)
+          {:ok, delta} = text(delta)
+          # Logger.info("🔔 DELTA EVENT RECEIVED: #{inspect(delta)}")
 
-            payload =
-              payload
-              |> Map.put(:message, delta)
-              |> Map.put(:from, "pmb-team@pickmybrain.com")
-              |> Map.put(:is_stream, true)
-              |> Map.put(:timestamp, System.monotonic_time(:millisecond))
+          payload =
+            payload
+            |> Map.put(:message, delta)
+            |> Map.put(:from, "pmb-team@pickmybrain.com")
+            |> Map.put(:is_stream, true)
+            |> Map.put(:timestamp, System.monotonic_time(:millisecond))
 
-            MyApp.Broadcaster.broadcast("cluster:typing", :stream_delta, payload)
+          MyApp.Broadcaster.broadcast("cluster:typing", :stream_delta, payload)
 
-          {:ok, _message} ->
-            # MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
-            :ok
+        {:ok, _message} ->
+          # MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
+          :ok
 
-          {:error, error} ->
-            Logger.error("Error: #{inspect(error)}")
-        end)
-        |> Stream.run()
+        {:error, error} ->
+          Logger.error("Error: #{inspect(error)}")
       end)
+      |> Stream.run()
+    end)
 
-    {:ok, %{question: question_message, answer: nil, task_pid: task_pid, prompts: nil}}
+    {:ok, %{question: question_message, answer: nil}}
   end
 
   def create_thread() do

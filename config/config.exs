@@ -74,8 +74,8 @@ config :oapi_open_ai,
   http_options: [recv_timeout: 30_000]
 
 config :my_app, :open_ai,
-  global_assistant_id: System.get_env("OPENAI_GLOBAL_ASSISTANT_ID", ""),
-  global_vector_store_id: System.get_env("OPENAI_GLOBAL_VECTOR_STORE_ID", "")
+  assistant_id: System.get_env("OPENAI_ASSISTANT_ID", ""),
+  vector_store_id: System.get_env("OPENAI_VECTOR_STORE_ID", "")
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

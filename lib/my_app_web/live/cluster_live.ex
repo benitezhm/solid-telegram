@@ -102,7 +102,7 @@ defmodule MyAppWeb.ClusterLive do
         timestamp: DateTime.utc_now() |> DateTime.to_string()
       }
 
-      OpenAI.stream(%{
+      OpenAI.create_message(%{
         question: message,
         openai_thread_id: socket.assigns.selected_thread,
         payload: payload
@@ -382,8 +382,8 @@ defmodule MyAppWeb.ClusterLive do
           </div>
 
     <!-- AI Streaming Responses -->
-        <%!-- = if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do --%>
-        <%= if map_size(@streaming_responses) > 0 and @streaming_responses |> Map.values() |> List.first() |> Map.get(:from) != @current_node  do %>
+          <%!-- = if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do --%>
+          <%= if map_size(@streaming_responses) > 0 and @streaming_responses |> Map.values() |> List.first() |> Map.get(:from) != @current_node  do %>
             <div class="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl shadow-2xl p-4 mb-6 border border-violet-400">
               <div class="space-y-3">
                 <%= for {_node, response_data} <- @streaming_responses do %>
