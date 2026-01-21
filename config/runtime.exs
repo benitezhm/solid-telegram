@@ -20,7 +20,9 @@ if System.get_env("PHX_SERVER") do
   config :my_app, MyAppWeb.Endpoint, server: true
 end
 
-config :my_app, MyAppWeb.Endpoint, http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+config :my_app, MyAppWeb.Endpoint,
+  http: [port: String.to_integer(System.get_env("PORT", "4000"))],
+  check_origin: false
 
 if config_env() == :prod do
   database_url =
