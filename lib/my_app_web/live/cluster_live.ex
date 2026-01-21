@@ -194,105 +194,77 @@ defmodule MyAppWeb.ClusterLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div class="max-w-6xl mx-auto p-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-          <h1 class="text-5xl font-bold text-white mb-2">
-            Phoenix Cluster Demo
-          </h1>
-          <p class="text-purple-300 text-lg">Real-time Erlang Distribution & PubSub with Threads</p>
-        </div>
-
-    <!-- Cluster Information Card -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-2xl p-6 mb-6 border border-blue-400">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-              <span class="text-3xl">🌐</span> Cluster Status
-            </h2>
-            <button
-              phx-click="refresh_nodes"
-              class="bg-white text-blue-700 px-6 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-all transform hover:scale-105 shadow-lg"
-            >
-              🔄 Refresh
-            </button>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
-              <p class="text-blue-200 text-sm mb-1">Current Node</p>
-              <p class="text-white text-xl font-mono font-bold">{@current_node}</p>
+    <div class="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 pb-24">
+      <div class="max-w-4xl mx-auto px-4 py-4">
+        <!-- Compact Cluster Status Bar -->
+        <div class="bg-slate-800/80 backdrop-blur rounded-lg shadow-md px-4 py-2 mb-4 border border-slate-700">
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-4 text-xs">
+              <span class="text-slate-400">Node:</span>
+              <span class="text-teal-400 font-mono font-medium">{@current_node}</span>
+              <span class="text-slate-500">|</span>
+              <span class="text-slate-400">{length(@nodes)} connected</span>
             </div>
-            <div class="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
-              <p class="text-blue-200 text-sm mb-1">Connected Nodes</p>
-              <p class="text-white text-xl font-bold">{length(@nodes)} Node(s)</p>
-            </div>
-          </div>
-
-          <div class="bg-white/10 backdrop-blur rounded-xl p-4 border border-white/20">
-            <p class="text-blue-200 text-sm mb-3 font-semibold">All Nodes in Cluster:</p>
-            <div class="flex flex-wrap gap-2">
+            <div class="flex items-center gap-2">
               <%= for node <- @nodes do %>
                 <span class={[
-                  "px-4 py-2 rounded-lg font-mono text-sm font-semibold shadow-md",
+                  "px-2 py-0.5 rounded text-xs font-mono",
                   if node == @current_node do
-                    "bg-green-500 text-white ring-2 ring-green-300"
+                    "bg-teal-500/20 text-teal-400 ring-1 ring-teal-500/40"
                   else
-                    "bg-white/20 text-white"
+                    "bg-slate-800 text-slate-400"
                   end
                 ]}>
-                  <%= if node == @current_node do %>
-                    ⭐ {node} (YOU)
-                  <% else %>
-                    🔗 {node}
-                  <% end %>
+                  {node}
                 </span>
               <% end %>
+              <button
+                phx-click="refresh_nodes"
+                class="ml-2 text-slate-400 hover:text-white text-xs px-2 py-1 rounded hover:bg-slate-700 transition-colors"
+              >
+                ↻
+              </button>
             </div>
           </div>
         </div>
 
-    <!-- Threads Section -->
-        <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl shadow-2xl p-6 mb-6 border border-indigo-400">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-2xl font-bold text-white flex items-center gap-2">
-              <span class="text-3xl">📌</span> Threads
-            </h2>
+        <!-- Compact Threads Section -->
+        <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow-md px-4 py-3 mb-4 border border-slate-700">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-slate-300">Threads</h2>
             <button
               phx-click="show_create_thread"
-              class="bg-white text-indigo-700 px-6 py-2 rounded-lg font-semibold hover:bg-indigo-50 transition-all transform hover:scale-105 shadow-lg"
+              class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded transition-colors"
             >
-              ➕ New Thread
+              + New
             </button>
           </div>
 
-    <!-- Create Thread Modal -->
+          <!-- Create Thread Modal -->
           <%= if @show_create_thread do %>
-            <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-              <div class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4">
-                <h3 class="text-2xl font-bold text-slate-800 mb-4">Create New Thread</h3>
-
-                <.form for={@thread_form} phx-submit="create_thread" class="space-y-4">
+            <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+              <div class="bg-slate-800 rounded-lg shadow-xl p-4 w-full max-w-sm mx-4 border border-slate-600">
+                <h3 class="text-base font-semibold text-white mb-3">New Thread</h3>
+                <.form for={@thread_form} phx-submit="create_thread" class="space-y-3">
                   <input
                     type="text"
                     name="title"
                     value={@thread_form[:title].value}
                     placeholder="Thread title..."
-                    class="w-full border-2 border-indigo-300 rounded-xl px-4 py-3 text-lg focus:outline-none focus:ring-4 focus:ring-indigo-300 text-black"
+                    class="w-full bg-slate-700 border border-slate-600 rounded px-3 py-2 text-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     autocomplete="off"
                   />
-
-                  <div class="flex gap-3">
+                  <div class="flex gap-2">
                     <button
                       type="submit"
-                      class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-all"
+                      class="flex-1 bg-indigo-600 text-white px-3 py-2 rounded text-sm font-medium hover:bg-indigo-700 transition-colors"
                     >
-                      Create 🚀
+                      Create
                     </button>
                     <button
                       type="button"
                       phx-click="cancel_create_thread"
-                      class="flex-1 bg-slate-300 text-slate-800 px-6 py-3 rounded-xl font-semibold hover:bg-slate-400 transition-all"
+                      class="flex-1 bg-slate-600 text-slate-200 px-3 py-2 rounded text-sm font-medium hover:bg-slate-500 transition-colors"
                     >
                       Cancel
                     </button>
@@ -302,103 +274,48 @@ defmodule MyAppWeb.ClusterLive do
             </div>
           <% end %>
 
-    <!-- Threads List -->
+          <!-- Threads List - Horizontal Scroll -->
           <%= if @threads == [] do %>
-            <div class="text-center py-8">
-              <p class="text-indigo-200 text-lg">No threads yet. Create one to get started!</p>
-            </div>
+            <p class="text-slate-500 text-xs py-2">No threads yet. Create one to get started.</p>
           <% else %>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
               <%= for thread <- @threads do %>
                 <button
                   phx-click="select_thread"
                   phx-value-thread_id={thread.id}
                   class={[
-                    "text-left p-4 rounded-lg border-2 transition-all transform hover:scale-105",
+                    "flex-shrink-0 text-left px-3 py-2 rounded border transition-all text-xs",
                     if @selected_thread == thread.id do
-                      "bg-white border-indigo-500 shadow-lg"
+                      "bg-indigo-600 border-indigo-500 text-white"
                     else
-                      "bg-white/10 border-white/20 hover:bg-white/20"
+                      "bg-slate-700/50 border-slate-600 text-slate-300 hover:bg-slate-700"
                     end
                   ]}
                 >
-                  <h3 class={[
-                    "font-bold text-lg",
-                    if @selected_thread == thread.id do
-                      "text-indigo-700"
-                    else
-                      "text-white"
-                    end
+                  <div class="font-medium truncate max-w-[150px]">{thread.title}</div>
+                  <div class={[
+                    "text-xs mt-0.5 truncate max-w-[150px]",
+                    if(@selected_thread == thread.id, do: "text-indigo-200", else: "text-slate-500")
                   ]}>
-                    {thread.title}
-                  </h3>
-                  <p class={[
-                    "text-sm mt-1",
-                    if @selected_thread == thread.id do
-                      "text-slate-600"
-                    else
-                      "text-indigo-200"
-                    end
-                  ]}>
-                    Created by {thread.created_by}
-                  </p>
+                    {thread.created_by}
+                  </div>
                 </button>
               <% end %>
             </div>
           <% end %>
         </div>
 
-    <!-- Message Input Card (only show if thread selected) -->
         <%= if @selected_thread do %>
-          <div class="bg-gradient-to-r from-green-600 to-emerald-700 rounded-2xl shadow-2xl p-6 mb-6 border border-green-400">
-            <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <span class="text-3xl">💬</span> Send Message
-            </h2>
-            <.form
-              for={@form}
-              id="message-form"
-              phx-submit="send_message"
-              phx-change="typing"
-              class="flex gap-3"
-            >
-              <input
-                type="text"
-                name="message"
-                value={@form[:message].value}
-                placeholder="Type your message here..."
-                class="flex-1 border-2 border-green-300 rounded-xl px-6 py-4 text-lg focus:outline-none focus:ring-4 focus:ring-green-300 shadow-lg"
-                autocomplete="off"
-              />
-              <button
-                type="submit"
-                class="bg-white text-green-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-green-50 transition-all transform hover:scale-105 shadow-xl"
-              >
-                Send 🚀
-              </button>
-            </.form>
-            <p class="text-green-100 text-sm mt-3">
-              Messages will appear instantly on all connected nodes!
-            </p>
-          </div>
-
-    <!-- AI Streaming Responses -->
-          <%!-- = if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do --%>
-          <%= if map_size(@streaming_responses) > 0 and @streaming_responses |> Map.values() |> List.first() |> Map.get(:from) != @current_node  do %>
-            <div class="bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl shadow-2xl p-4 mb-6 border border-violet-400">
-              <div class="space-y-3">
+          <!-- AI Streaming Responses -->
+          <%= if map_size(@streaming_responses) > 0 and @streaming_responses |> Map.values() |> List.first() |> Map.get(:from) != @current_node do %>
+            <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow p-3 mb-3 border border-teal-800/50">
+              <div class="space-y-2">
                 <%= for {_node, response_data} <- @streaming_responses do %>
-                  <div class="bg-white/20 backdrop-blur rounded-xl p-4 border border-white/20">
-                    <div class="flex items-start gap-3">
-                      <span class="text-white font-bold text-sm flex-shrink-0">
-                        🤖 PMB AI Team
-                      </span>
-                      <div class="flex-1 min-w-0">
-                        <span class="text-white/80 text-xs block mb-2">pmb-team@pickmybrain.com</span>
-                        <span class="text-white font-medium break-words inline">
-                          {response_data.message}
-                        </span>
-                        <span class="text-violet-200 animate-pulse inline">▌</span>
-                      </div>
+                  <div class="flex items-start gap-2">
+                    <span class="text-teal-400 text-xs font-medium flex-shrink-0">🤖 AI</span>
+                    <div class="flex-1 min-w-0">
+                      <span class="text-slate-200 text-sm break-words">{response_data.message}</span>
+                      <span class="text-teal-500 animate-pulse">▌</span>
                     </div>
                   </div>
                 <% end %>
@@ -406,23 +323,17 @@ defmodule MyAppWeb.ClusterLive do
             </div>
           <% end %>
 
-    <!-- User Typing Indicators -->
+          <!-- User Typing Indicators -->
           <%= if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do %>
-            <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl shadow-2xl p-4 mb-6 border border-amber-400">
-              <div class="space-y-2">
+            <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow p-3 mb-3 border border-slate-700">
+              <div class="space-y-1">
                 <%= for {node, typing_data} <- @typing_status do %>
                   <%= if node != @current_node and String.trim(typing_data.message) != "" do %>
-                    <div class="bg-white/20 backdrop-blur rounded-xl p-4 border border-white/20">
-                      <div class="flex items-center gap-3">
-                        <span class="text-white font-bold font-mono text-sm">
-                          🔗 {node}
-                        </span>
-                        <span class="text-white/80 text-sm">is typing:</span>
-                        <span class="text-white font-medium flex-1">
-                          {typing_data.message}
-                        </span>
-                        <span class="text-amber-200 animate-pulse">✍️</span>
-                      </div>
+                    <div class="flex items-center gap-2 text-xs">
+                      <span class="text-sky-400 font-mono">{node}</span>
+                      <span class="text-slate-400">typing:</span>
+                      <span class="text-slate-300 flex-1 truncate">{typing_data.message}</span>
+                      <span class="text-sky-400 animate-pulse">•••</span>
                     </div>
                   <% end %>
                 <% end %>
@@ -430,76 +341,97 @@ defmodule MyAppWeb.ClusterLive do
             </div>
           <% end %>
 
-    <!-- Messages Card -->
-          <div class="bg-white rounded-2xl shadow-2xl p-6 border-2 border-purple-300">
-            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
-              <span class="text-3xl">📨</span>
-              Messages <span class="text-sm font-normal text-slate-500">(in this thread)</span>
-            </h2>
+          <!-- Messages Card - Main Focus -->
+          <div class="bg-slate-800/80 backdrop-blur rounded-lg shadow border border-slate-700">
+            <div class="px-4 py-3 border-b border-slate-700">
+              <h2 class="text-sm font-semibold text-slate-300">
+                Messages
+                <span class="text-xs font-normal text-slate-500 ml-1">(current thread)</span>
+              </h2>
+            </div>
 
-            <div class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+            <div class="p-4 space-y-3 max-h-[65vh] overflow-y-auto">
               <%= if @messages == [] do %>
                 <div class="text-center py-12">
-                  <div class="text-6xl mb-4">📭</div>
-                  <p class="text-slate-400 text-lg italic">
-                    No messages yet. Start the conversation!
-                  </p>
+                  <div class="text-4xl mb-3 opacity-50">💬</div>
+                  <p class="text-slate-500 text-sm">No messages yet. Start the conversation!</p>
                 </div>
               <% else %>
                 <%= for msg <- @messages do %>
                   <div class={[
-                    "rounded-xl p-5 shadow-lg border-2 transition-all hover:shadow-xl",
+                    "rounded-lg p-3 border transition-all",
                     if String.contains?(to_string(msg.from), to_string(@current_node)) do
-                      "bg-gradient-to-r from-purple-100 to-pink-100 border-purple-300"
+                      "bg-indigo-950/40 border-indigo-800/40"
                     else
-                      "bg-gradient-to-r from-blue-50 to-cyan-50 border-blue-300"
+                      "bg-slate-800/60 border-slate-700/60"
                     end
                   ]}>
-                    <div class="flex justify-between items-start mb-2">
+                    <div class="flex justify-between items-center mb-1.5">
                       <span class={[
-                        "font-bold text-sm px-3 py-1 rounded-full",
+                        "text-xs font-medium px-2 py-0.5 rounded",
                         if String.contains?(to_string(msg.from), to_string(@current_node)) do
-                          "bg-purple-600 text-white"
+                          "bg-indigo-600/40 text-indigo-300"
                         else
-                          "bg-blue-600 text-white"
+                          "bg-slate-700/60 text-slate-400"
                         end
                       ]}>
-                        <%= if String.contains?(to_string(msg.from), to_string(@current_node)) do %>
-                          ⭐ {msg.from}
-                        <% else %>
-                          🔗 {msg.from}
-                        <% end %>
+                        {msg.from}
                       </span>
-                      <span class="text-xs text-slate-500 font-mono bg-white px-2 py-1 rounded">
-                        {msg.timestamp}
-                      </span>
+                      <span class="text-xs text-slate-500 font-mono">{msg.timestamp}</span>
                     </div>
-                    <p class="text-slate-800 text-lg font-medium pl-1">{msg.message}</p>
+                    <p class="text-slate-200 text-sm pl-0.5">{msg.message}</p>
                   </div>
                 <% end %>
               <% end %>
             </div>
           </div>
         <% else %>
-          <!-- No Thread Selected Message -->
-          <div class="bg-white rounded-2xl shadow-2xl p-12 text-center border-2 border-slate-300">
-            <div class="text-6xl mb-4">🧵</div>
-            <h3 class="text-2xl font-bold text-slate-800 mb-2">No Thread Selected</h3>
-            <p class="text-slate-600 text-lg">
-              Create a new thread or select an existing one to start messaging!
-            </p>
+          <!-- No Thread Selected -->
+          <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow-md p-8 text-center border border-slate-700">
+            <div class="text-3xl mb-3 opacity-50">🧵</div>
+            <h3 class="text-base font-medium text-slate-300 mb-1">No Thread Selected</h3>
+            <p class="text-slate-500 text-sm">Create or select a thread to start messaging.</p>
           </div>
         <% end %>
 
-    <!-- Footer Info -->
-        <div class="mt-6 text-center">
-          <p class="text-purple-300 text-sm">
-            Open <strong class="text-white">localhost:4000/cluster</strong>
-            and <strong class="text-white">localhost:4001/cluster</strong>
-            in different tabs to see real-time sync!
+        <!-- Footer Info -->
+        <div class="mt-4 text-center">
+          <p class="text-slate-500 text-xs">
+            Open <span class="text-slate-400">localhost:4000/cluster</span> and
+            <span class="text-slate-400">localhost:4001/cluster</span> to see real-time sync
           </p>
         </div>
       </div>
+
+      <!-- Fixed Message Input at Bottom -->
+      <%= if @selected_thread do %>
+        <div class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur border-t border-slate-800 py-3 px-4">
+          <div class="max-w-4xl mx-auto">
+            <.form
+              for={@form}
+              id="message-form"
+              phx-submit="send_message"
+              phx-change="typing"
+              class="flex gap-2"
+            >
+              <input
+                type="text"
+                name="message"
+                value={@form[:message].value}
+                placeholder="Type a message..."
+                class="flex-1 bg-slate-800/80 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50"
+                autocomplete="off"
+              />
+              <button
+                type="submit"
+                class="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors"
+              >
+                Send
+              </button>
+            </.form>
+          </div>
+        </div>
+      <% end %>
     </div>
     """
   end
