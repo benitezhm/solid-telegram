@@ -306,41 +306,6 @@ defmodule MyAppWeb.ClusterLive do
         </div>
 
         <%= if @selected_thread do %>
-          <!-- AI Streaming Responses -->
-          <%= if map_size(@streaming_responses) > 0 and @streaming_responses |> Map.values() |> List.first() |> Map.get(:from) != @current_node do %>
-            <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow p-3 mb-3 border border-teal-800/50">
-              <div class="space-y-2">
-                <%= for {_node, response_data} <- @streaming_responses do %>
-                  <div class="flex items-start gap-2">
-                    <span class="text-teal-400 text-xs font-medium flex-shrink-0">🤖 AI</span>
-                    <div class="flex-1 min-w-0">
-                      <span class="text-slate-200 text-sm break-words">{response_data.message}</span>
-                      <span class="text-teal-500 animate-pulse">▌</span>
-                    </div>
-                  </div>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-
-          <!-- User Typing Indicators -->
-          <%= if map_size(@typing_status) > 0 and @typing_status |> Map.values() |> List.first() |> Map.get(:from) != @current_node do %>
-            <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow p-3 mb-3 border border-slate-700">
-              <div class="space-y-1">
-                <%= for {node, typing_data} <- @typing_status do %>
-                  <%= if node != @current_node and String.trim(typing_data.message) != "" do %>
-                    <div class="flex items-center gap-2 text-xs">
-                      <span class="text-sky-400 font-mono">{node}</span>
-                      <span class="text-slate-400">typing:</span>
-                      <span class="text-slate-300 flex-1 truncate">{typing_data.message}</span>
-                      <span class="text-sky-400 animate-pulse">•••</span>
-                    </div>
-                  <% end %>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-
           <!-- Messages Card - Main Focus -->
           <div class="bg-slate-800/80 backdrop-blur rounded-lg shadow border border-slate-700">
             <div class="px-4 py-3 border-b border-slate-700">
@@ -350,14 +315,14 @@ defmodule MyAppWeb.ClusterLive do
               </div>
             </div>
 
-            <div class="p-4 space-y-3 max-h-[65vh] overflow-y-auto">
+            <div id="messages-container" phx-hook="ScrollToBottom" class="p-4 space-y-3 max-h-[65vh] overflow-y-auto">
               <%= if @messages == [] do %>
                 <div class="text-center py-12">
                   <div class="text-4xl mb-3 opacity-50">💬</div>
                   <p class="text-slate-500 text-sm">No messages yet. Start the conversation!</p>
                 </div>
               <% else %>
-                <%= for msg <- @messages do %>
+                <%= for msg <- Enum.reverse(@messages) do %>
                   <div class={[
                     "rounded-lg p-3 border transition-all",
                     if String.contains?(to_string(msg.from), to_string(@current_node)) do
@@ -383,6 +348,20 @@ defmodule MyAppWeb.ClusterLive do
                   </div>
                 <% end %>
               <% end %>
+              <!-- Streaming AI Response -->
+              <%= for {_node, response_data} <- @streaming_responses do %>
+                <div class="rounded-lg p-3 border transition-all bg-teal-950/30 border-teal-800/40">
+                  <div class="flex justify-between items-center mb-1.5">
+                    <span class="text-xs font-medium px-2 py-0.5 rounded bg-teal-600/40 text-teal-300">
+                      {response_data.from}
+                    </span>
+                    <span class="text-xs text-teal-400 animate-pulse">streaming...</span>
+                  </div>
+                  <p class="text-slate-200 text-sm pl-0.5">
+                    {response_data.message}<span class="text-teal-400 animate-pulse">▌</span>
+                  </p>
+                </div>
+              <% end %>
             </div>
           </div>
         <% else %>
@@ -394,19 +373,12 @@ defmodule MyAppWeb.ClusterLive do
           </div>
         <% end %>
 
-        <!-- Footer Info -->
-        <div class="mt-4 text-center">
-          <p class="text-slate-500 text-xs">
-            Open <span class="text-slate-400">localhost:4000/cluster</span> and
-            <span class="text-slate-400">localhost:4001/cluster</span> to see real-time sync
-          </p>
-        </div>
       </div>
 
-      <!-- Fixed Message Input at Bottom -->
-      <%= if @selected_thread do %>
-        <div class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur border-t border-slate-800 py-3 px-4">
-          <div class="max-w-4xl mx-auto">
+      <!-- Fixed Bottom Section -->
+      <div class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur border-t border-slate-800 py-3 px-4">
+        <div class="max-w-4xl mx-auto">
+          <%= if @selected_thread do %>
             <.form
               for={@form}
               id="message-form"
@@ -429,9 +401,13 @@ defmodule MyAppWeb.ClusterLive do
                 Send
               </button>
             </.form>
-          </div>
+          <% end %>
+          <p class="text-slate-600 text-xs text-center mt-2">
+            Open <span class="text-slate-500">localhost:4000/cluster</span> and
+            <span class="text-slate-500">localhost:4001/cluster</span> to see real-time sync
+          </p>
         </div>
-      <% end %>
+      </div>
     </div>
     """
   end
