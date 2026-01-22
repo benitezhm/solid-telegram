@@ -50,8 +50,22 @@ defmodule MyApp.Services.OpenAI do
             |> Map.put(:from, "pmb-team@pickmybrain.com")
             |> Map.put(:streaming_responses, %{})
 
-          # broadcast message here
+          # broadcast message here (PubSub for LiveView)
           MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
+
+          # Publish to GraphQL subscriptions
+          Absinthe.Subscription.publish(
+            MyAppWeb.Endpoint,
+            %{
+              message: answer,
+              event_type: "message",
+              username: payload.from,
+              thread_id: payload.thread_id,
+              is_stream: false,
+              timestamp: payload.timestamp
+            },
+            thread_event: "thread:#{payload.thread_id}"
+          )
 
         {:ok, %{event: "thread.message.delta", data: %{delta: delta} = _answer} = _event} ->
           # :timer.sleep(100)
@@ -65,7 +79,22 @@ defmodule MyApp.Services.OpenAI do
             |> Map.put(:is_stream, true)
             |> Map.put(:timestamp, System.monotonic_time(:millisecond))
 
+          # PubSub for LiveView
           MyApp.Broadcaster.broadcast("cluster:typing", :stream_delta, payload)
+
+          # Publish to GraphQL subscriptions
+          Absinthe.Subscription.publish(
+            MyAppWeb.Endpoint,
+            %{
+              message: delta,
+              event_type: "stream_delta",
+              username: payload.from,
+              thread_id: payload.thread_id,
+              is_stream: true,
+              timestamp: to_string(payload.timestamp)
+            },
+            thread_event: "thread:#{payload.thread_id}"
+          )
 
         {:ok, _message} ->
           # MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)

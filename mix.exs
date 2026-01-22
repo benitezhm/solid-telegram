@@ -69,7 +69,11 @@ defmodule MyApp.MixProject do
       {:bandit, "~> 1.5"},
       {:plug_cowboy, "~> 2.5"},
       {:oapi_open_ai, "~> 1.0.1", override: true},
-      {:libcluster, "~> 3.3"}
+      {:libcluster, "~> 3.3"},
+      # GraphQL
+      {:absinthe, "~> 1.7"},
+      {:absinthe_plug, "~> 1.5"},
+      {:absinthe_phoenix, "~> 2.0"}
     ]
   end
 

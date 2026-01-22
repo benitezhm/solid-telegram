@@ -344,10 +344,10 @@ defmodule MyAppWeb.ClusterLive do
           <!-- Messages Card - Main Focus -->
           <div class="bg-slate-800/80 backdrop-blur rounded-lg shadow border border-slate-700">
             <div class="px-4 py-3 border-b border-slate-700">
-              <h2 class="text-sm font-semibold text-slate-300">
-                Messages
-                <span class="text-xs font-normal text-slate-500 ml-1">(current thread)</span>
-              </h2>
+              <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-slate-300">Messages</h2>
+                <code class="text-xs text-slate-500 font-mono bg-slate-900/50 px-2 py-0.5 rounded select-all">{@selected_thread}</code>
+              </div>
             </div>
 
             <div class="p-4 space-y-3 max-h-[65vh] overflow-y-auto">

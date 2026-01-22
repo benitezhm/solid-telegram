@@ -21,7 +21,9 @@ defmodule MyApp.Application do
       # Start a worker by calling: MyApp.Worker.start_link(arg)
       # {MyApp.Worker, arg},
       # Start to serve requests, typically the last entry
-      MyAppWeb.Endpoint
+      MyAppWeb.Endpoint,
+      # Absinthe subscriptions (must be after Endpoint)
+      {Absinthe.Subscription, MyAppWeb.Endpoint}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

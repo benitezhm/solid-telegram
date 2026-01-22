@@ -21,10 +21,17 @@ defmodule MyAppWeb.Router do
     live "/cluster", ClusterLive
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", MyAppWeb do
-  #   pipe_through :api
-  # end
+  # GraphQL API
+  scope "/api" do
+    pipe_through :api
+
+    forward "/graphql", Absinthe.Plug, schema: MyAppWeb.Schema
+
+    forward "/graphiql", Absinthe.Plug.GraphiQL,
+      schema: MyAppWeb.Schema,
+      socket: MyAppWeb.GraphqlSocket,
+      interface: :playground
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:my_app, :dev_routes) do
