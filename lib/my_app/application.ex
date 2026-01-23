@@ -14,7 +14,6 @@ defmodule MyApp.Application do
       # Start the cluster supervisor
       {Cluster.Supervisor, [topologies, [name: MyApp.ClusterSupervisor]]},
       MyAppWeb.Telemetry,
-      MyApp.Repo,
       {DNSCluster, query: Application.get_env(:my_app, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MyApp.PubSub},
       {Task.Supervisor, name: MyApp.TaskSupervisor},
@@ -25,6 +24,13 @@ defmodule MyApp.Application do
       # Absinthe subscriptions (must be after Endpoint)
       {Absinthe.Subscription, MyAppWeb.Endpoint}
     ]
+
+    children =
+      if System.get_env("DATABASE_URL") do
+        [MyApp.Repo | children]
+      else
+        children
+      end
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

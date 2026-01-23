@@ -17,8 +17,8 @@ spec:
     spec:
       containers:
         - name: phoenix
-          image: my_app:latest
-          imagePullPolicy: Never
+          image: benitezhm/my_app:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 4000
               name: http
@@ -120,8 +120,8 @@ spec:
       # Run migrations on first pod startup
       initContainers:
         - name: migrate
-          image: my_app:latest
-          imagePullPolicy: Never
+          image: benitezhm/my_app:latest
+          imagePullPolicy: Always
           command: ["bin/my_app", "eval", "MyApp.Release.migrate"]
           env:
             - name: DATABASE_URL

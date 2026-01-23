@@ -1,6 +1,8 @@
 defmodule MyAppWeb.Router do
   use MyAppWeb, :router
 
+  import Phoenix.LiveDashboard.Router
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -19,6 +21,8 @@ defmodule MyAppWeb.Router do
 
     get "/", PageController, :home
     live "/cluster", ClusterLive
+    get "/health", HealthController, :index
+    live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
   end
 
   # GraphQL API
@@ -40,12 +44,12 @@ defmodule MyAppWeb.Router do
     # If your application does not have an admins-only section yet,
     # you can use Plug.BasicAuth to set up some basic authentication
     # as long as you are also using SSL (which you should anyway).
-    import Phoenix.LiveDashboard.Router
+    # import Phoenix.LiveDashboard.Router
 
     scope "/dev" do
       pipe_through :browser
 
-      live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
+      # live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
     end
   end

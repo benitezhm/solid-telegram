@@ -52,6 +52,30 @@ defmodule MyAppWeb.Telemetry do
         unit: {:native, :millisecond}
       ),
 
+      # PubSub Metrics
+      counter("phoenix.channel.join.count",
+        tags: [:channel]
+      ),
+      counter("phoenix.channel.leave.count",
+        tags: [:channel]
+      ),
+      last_value("my_app.cluster.node_count",
+        description: "Number of connected nodes in cluster"
+      ),
+      counter("my_app.pubsub.broadcast.count",
+        tags: [:topic],
+        description: "Number of PubSub broadcasts"
+      ),
+      counter("my_app.pubsub.broadcast.error",
+        tags: [:topic],
+        description: "Failed PubSub broadcasts"
+      ),
+      # GraphQL Subscription metrics
+      counter("absinthe.subscription.publish.count",
+        tags: [:subscription],
+        description: "GraphQL subscription publishes"
+      ),
+
       # Database Metrics
       summary("my_app.repo.query.total_time",
         unit: {:native, :millisecond},
@@ -88,6 +112,19 @@ defmodule MyAppWeb.Telemetry do
       # A module, function and arguments to be invoked periodically.
       # This function must call :telemetry.execute/3 and a metric must be added above.
       # {MyAppWeb, :count_users, []}
+      {__MODULE__, :dispatch_cluster_info, []},
+      {__MODULE__, :dispatch_pubsub_info, []}
     ]
+  end
+
+  # Custom measurement for cluster info
+  def dispatch_cluster_info do
+    nodes = [Node.self() | Node.list()]
+    :telemetry.execute([:my_app, :cluster], %{node_count: length(nodes)}, %{})
+  end
+
+  def dispatch_pubsub_info do
+    # Count active PubSub subscribers
+    :telemetry.execute([:my_app, :pubsub], %{}, %{})
   end
 end

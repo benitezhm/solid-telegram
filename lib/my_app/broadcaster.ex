@@ -9,6 +9,13 @@ defmodule MyApp.Broadcaster do
   Broadcasts a message to all subscribers of a topic across the cluster
   """
   def broadcast(topic, event, payload) do
+    # Emit telemetry before broadcast
+    :telemetry.execute(
+      [:my_app, :pubsub, :broadcast],
+      %{count: 1},
+      %{topic: topic}
+    )
+
     Phoenix.PubSub.broadcast(@pubsub, topic, {event, payload})
   end
 

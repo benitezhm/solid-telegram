@@ -227,8 +227,8 @@ defmodule MyAppWeb.ClusterLive do
             </div>
           </div>
         </div>
-
-        <!-- Compact Threads Section -->
+        
+    <!-- Compact Threads Section -->
         <div class="bg-slate-800/60 backdrop-blur rounded-lg shadow-md px-4 py-3 mb-4 border border-slate-700">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-sm font-semibold text-slate-300">Threads</h2>
@@ -239,8 +239,8 @@ defmodule MyAppWeb.ClusterLive do
               + New
             </button>
           </div>
-
-          <!-- Create Thread Modal -->
+          
+    <!-- Create Thread Modal -->
           <%= if @show_create_thread do %>
             <div class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
               <div class="bg-slate-800 rounded-lg shadow-xl p-4 w-full max-w-sm mx-4 border border-slate-600">
@@ -273,8 +273,8 @@ defmodule MyAppWeb.ClusterLive do
               </div>
             </div>
           <% end %>
-
-          <!-- Threads List - Horizontal Scroll -->
+          
+    <!-- Threads List - Horizontal Scroll -->
           <%= if @threads == [] do %>
             <p class="text-slate-500 text-xs py-2">No threads yet. Create one to get started.</p>
           <% else %>
@@ -311,11 +311,17 @@ defmodule MyAppWeb.ClusterLive do
             <div class="px-4 py-3 border-b border-slate-700">
               <div class="flex items-center justify-between">
                 <h2 class="text-sm font-semibold text-slate-300">Messages</h2>
-                <code class="text-xs text-slate-500 font-mono bg-slate-900/50 px-2 py-0.5 rounded select-all">{@selected_thread}</code>
+                <code class="text-xs text-slate-500 font-mono bg-slate-900/50 px-2 py-0.5 rounded select-all">
+                  {@selected_thread}
+                </code>
               </div>
             </div>
 
-            <div id="messages-container" phx-hook="ScrollToBottom" class="p-4 space-y-3 max-h-[65vh] overflow-y-auto">
+            <div
+              id="messages-container"
+              phx-hook="ScrollToBottom"
+              class="p-4 space-y-3 max-h-[65vh] overflow-y-auto"
+            >
               <%= if @messages == [] do %>
                 <div class="text-center py-12">
                   <div class="text-4xl mb-3 opacity-50">💬</div>
@@ -372,10 +378,9 @@ defmodule MyAppWeb.ClusterLive do
             <p class="text-slate-500 text-sm">Create or select a thread to start messaging.</p>
           </div>
         <% end %>
-
       </div>
-
-      <!-- Fixed Bottom Section -->
+      
+    <!-- Fixed Bottom Section -->
       <div class="fixed bottom-0 left-0 right-0 bg-slate-950/95 backdrop-blur border-t border-slate-800 py-3 px-4">
         <div class="max-w-4xl mx-auto">
           <%= if @selected_thread do %>
@@ -403,8 +408,9 @@ defmodule MyAppWeb.ClusterLive do
             </.form>
           <% end %>
           <p class="text-slate-600 text-xs text-center mt-2">
-            Open <span class="text-slate-500">localhost:4000/cluster</span> and
-            <span class="text-slate-500">localhost:4001/cluster</span> to see real-time sync
+            Open <span class="text-slate-500">localhost:4000/cluster</span>
+            and <span class="text-slate-500">localhost:4001/cluster</span>
+            to see real-time sync
           </p>
         </div>
       </div>

@@ -9,6 +9,5 @@ data:
   PHX_HOST: "localhost"
   PORT: "4000"
   PHX_SERVER: "true"
-  DATABASE_URL: "ecto://postgres:postgres@postgres-service:5432/my_app_dev"
   DNS_CLUSTER_QUERY: "phoenix-headless.my-app.svc.cluster.local"
   RELEASE_COOKIE: "my_app_cookie"
