@@ -9,6 +9,7 @@ defmodule MyApp.Broadcaster do
   Broadcasts a message to all subscribers of a topic across the cluster
   """
   def broadcast(topic, event, payload) do
+    start_time = System.monotonic_time()
     # Emit telemetry before broadcast
     :telemetry.execute(
       [:my_app, :pubsub, :broadcast],
@@ -17,6 +18,14 @@ defmodule MyApp.Broadcaster do
     )
 
     Phoenix.PubSub.broadcast(@pubsub, topic, {event, payload})
+    duration = System.monotonic_time() - start_time
+
+    # Emit telemetry
+    :telemetry.execute(
+      [:my_app, :pubsub, :broadcast],
+      %{duration: duration, count: 1},
+      %{topic: topic, event: event}
+    )
   end
 
   @doc """

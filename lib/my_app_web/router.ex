@@ -23,6 +23,7 @@ defmodule MyAppWeb.Router do
     live "/cluster", ClusterLive
     get "/health", HealthController, :index
     live_dashboard "/dashboard", metrics: MyAppWeb.Telemetry
+    live "/speed", StreamSpeedLive
   end
 
   # GraphQL API

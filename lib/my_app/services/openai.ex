@@ -30,6 +30,12 @@ defmodule MyApp.Services.OpenAI do
         payload: payload
       }) do
     Task.Supervisor.start_child(MyApp.TaskSupervisor, fn ->
+      # Track when streaming starts
+      stream_start_time = System.monotonic_time()
+      Process.put(:stream_start_time, stream_start_time)
+      Process.put(:first_chunk_received, false)
+      Process.put(:last_chunk_time, nil)
+
       %{
         openai_thread_id: openai_thread_id,
         ai_assistant_id: Env.Vars.openai_assistant_id()
@@ -40,8 +46,8 @@ defmodule MyApp.Services.OpenAI do
       )
       |> Stream.each(fn
         {:ok, %{event: "thread.message.completed", data: answer} = _event} ->
-          # :timer.sleep(500)
-          # Logger.info("🔔 COMPLETED EVENT RECEIVED: #{inspect(event)}")
+          # Measure broadcast time for completed message
+          broadcast_start = System.monotonic_time()
           {:ok, answer} = text(answer)
 
           payload =
@@ -67,10 +73,27 @@ defmodule MyApp.Services.OpenAI do
             thread_event: "thread:#{payload.thread_id}"
           )
 
+          broadcast_duration = System.monotonic_time() - broadcast_start
+
+          # Emit telemetry for completed message
+          :telemetry.execute(
+            [:my_app, :message, :completed],
+            %{duration: broadcast_duration},
+            %{thread_id: payload.thread_id, type: "completed"}
+          )
+
+          # Total streaming time
+          total_stream_duration = System.monotonic_time() - stream_start_time
+
+          :telemetry.execute(
+            [:my_app, :openai, :stream, :completed],
+            %{duration: total_stream_duration},
+            %{thread_id: payload.thread_id}
+          )
+
         {:ok, %{event: "thread.message.delta", data: %{delta: delta} = _answer} = _event} ->
-          # :timer.sleep(100)
+          current_time = System.monotonic_time()
           {:ok, delta} = text(delta)
-          # Logger.info("🔔 DELTA EVENT RECEIVED: #{inspect(delta)}")
 
           payload =
             payload
@@ -79,6 +102,8 @@ defmodule MyApp.Services.OpenAI do
             |> Map.put(:is_stream, true)
             |> Map.put(:timestamp, System.monotonic_time(:millisecond))
 
+          # Measure broadcast time for delta
+          broadcast_start = System.monotonic_time()
           # PubSub for LiveView
           MyApp.Broadcaster.broadcast("cluster:typing", :stream_delta, payload)
 
@@ -95,6 +120,40 @@ defmodule MyApp.Services.OpenAI do
             },
             thread_event: "thread:#{payload.thread_id}"
           )
+
+          broadcast_duration = System.monotonic_time() - broadcast_start
+
+          # Time between chunks (speed metric)
+          if !Process.get(:first_chunk_received, false) do
+            # First chunk - measure time from request start
+            stream_start_time = Process.get(:stream_start_time, current_time)
+            time_to_first_chunk = current_time - stream_start_time
+
+            :telemetry.execute(
+              [:my_app, :openai, :time_to_first_chunk],
+              %{duration: time_to_first_chunk},
+              %{thread_id: payload.thread_id}
+            )
+
+            # Update variables for next iteration
+            Process.put(:first_chunk_received, true)
+            Process.put(:last_chunk_time, current_time)
+          else
+            # Subsequent chunks - measure streaming interval
+            last_chunk_time = Process.get(:last_chunk_time, current_time)
+            chunk_interval = current_time - last_chunk_time
+
+            :telemetry.execute(
+              [:my_app, :openai, :chunk],
+              %{
+                duration: broadcast_duration,
+                interval: chunk_interval
+              },
+              %{thread_id: payload.thread_id, type: "delta"}
+            )
+
+            Process.put(:last_chunk_time, current_time)
+          end
 
         {:ok, _message} ->
           # MyApp.Broadcaster.broadcast("cluster:messages", :new_message, payload)
