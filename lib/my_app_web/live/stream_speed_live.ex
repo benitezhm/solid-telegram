@@ -19,6 +19,8 @@ defmodule MyAppWeb.StreamSpeedLive do
        chunk_count: 0,
        samples: [],
        ttfc_samples: [],
+       broadcast_samples: [],
+       total_broadcast_time: 0.0,
        performance_status: "idle"
      )}
   end
@@ -105,13 +107,27 @@ defmodule MyAppWeb.StreamSpeedLive do
         0.0
       end
 
+    # Keep last 100 samples for broadcast time average (ADD THIS)
+    new_broadcast_samples = [duration_ms | Enum.take(socket.assigns.broadcast_samples, 99)]
+
+    avg_broadcast =
+      if length(new_broadcast_samples) > 0 do
+        Enum.sum(new_broadcast_samples) / length(new_broadcast_samples)
+      else
+        0.0
+      end
+
+    new_total_broadcast_time = socket.assigns.total_broadcast_time + duration_ms
+
     {:noreply,
      socket
      |> assign(chunk_count: socket.assigns.chunk_count + 1)
      |> assign(total_chunks: socket.assigns.total_chunks + 1)
      |> assign(avg_chunk_interval: Float.round(avg_interval, 1))
-     |> assign(avg_broadcast_time: Float.round(duration_ms, 2))
-     |> assign(samples: new_interval_samples)}
+     |> assign(avg_broadcast_time: Float.round(avg_broadcast, 2))
+     |> assign(samples: new_interval_samples)
+     |> assign(total_broadcast_time: Float.round(new_total_broadcast_time, 2))
+     |> assign(broadcast_samples: new_broadcast_samples)}
   end
 
   # Catch-all for other messages
@@ -185,7 +201,7 @@ defmodule MyAppWeb.StreamSpeedLive do
             </div>
           </div>
         </div>
-        
+
     <!-- Cluster Nodes -->
         <div class="flex gap-2 items-center">
           <span class="text-sm text-gray-400">Nodes:</span>
@@ -203,23 +219,23 @@ defmodule MyAppWeb.StreamSpeedLive do
           <span class="text-gray-500 text-sm">{length(@nodes)} connected</span>
         </div>
       </div>
-      
+
     <!-- Metrics Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <!-- Chunk Interval -->
         <div class="bg-[#1a1f2e] rounded-lg p-6 border border-gray-800">
-          <div class="text-gray-400 text-sm mb-2">Chunk Interval</div>
+          <div class="text-gray-400 text-sm mb-2">Chunks per second</div>
           <div class="flex items-baseline gap-2">
             <div class="text-4xl font-bold text-blue-400">
-              {@avg_chunk_interval}
+              {Float.round(chunks_per_second(@avg_chunk_interval), 1)}
             </div>
-            <div class="text-gray-500 text-sm">ms</div>
+            <div class="text-gray-500 text-sm">chunks/s</div>
           </div>
           <div class="mt-2 text-xs text-gray-500">
-            {if @avg_chunk_interval < 100, do: "⚡ Fast", else: "⏱️ Normal"}
+            {if @avg_chunk_interval < 100, do: "⚡ Fast (<100ms)", else: "⏱️ Normal"}
           </div>
         </div>
-        
+
     <!-- Broadcast Time -->
         <div class="bg-[#1a1f2e] rounded-lg p-6 border border-gray-800">
           <div class="text-gray-400 text-sm mb-2">Broadcast Time</div>
@@ -233,21 +249,21 @@ defmodule MyAppWeb.StreamSpeedLive do
             {if @avg_broadcast_time < 5, do: "⚡ Excellent", else: "✓ Good"}
           </div>
         </div>
-        
-    <!-- Throughput -->
+
+    <!-- Total Broadcast Time -->
         <div class="bg-[#1a1f2e] rounded-lg p-6 border border-gray-800">
-          <div class="text-gray-400 text-sm mb-2">Throughput</div>
+          <div class="text-gray-400 text-sm mb-2">Total Broadcast Time</div>
           <div class="flex items-baseline gap-2">
             <div class="text-4xl font-bold text-purple-400">
-              {@chunks_per_second}
+              {@total_broadcast_time}
             </div>
-            <div class="text-gray-500 text-sm">chunks/s</div>
+            <div class="text-gray-500 text-sm">ms</div>
           </div>
           <div class="mt-2 text-xs text-gray-500">
-            {if @chunks_per_second > 5, do: "📈 High", else: "📊 Normal"}
+            Cumulative cluster sync time
           </div>
         </div>
-        
+
     <!-- Total Chunks -->
         <div class="bg-[#1a1f2e] rounded-lg p-6 border border-gray-800">
           <div class="text-gray-400 text-sm mb-2">Total Chunks</div>
@@ -262,7 +278,21 @@ defmodule MyAppWeb.StreamSpeedLive do
           </div>
         </div>
       </div>
-      
+
+      <!-- Total Processing Time -->
+      <div class="bg-[#1a1f2e] rounded-lg p-6 border border-gray-800">
+        <div class="text-gray-400 text-sm mb-2">Total Processing Time</div>
+        <div class="flex items-baseline gap-2">
+          <div class="text-4xl font-bold text-cyan-400">
+            <%= Float.round(@avg_time_to_first_chunk + @total_broadcast_time, 2) %>
+          </div>
+          <div class="text-gray-500 text-sm">ms</div>
+        </div>
+        <div class="mt-2 text-xs text-gray-500">
+          TTFC + Total Broadcast
+        </div>
+      </div>
+
     <!-- Performance Details -->
       <div class="bg-[#1a1f2e] rounded-lg p-6 border border-gray-800">
         <h2 class="text-lg font-semibold text-white mb-4">Performance Breakdown</h2>
@@ -298,7 +328,7 @@ defmodule MyAppWeb.StreamSpeedLive do
               {streaming_speed_status(@avg_chunk_interval)}
             </div>
           </div>
-          
+
     <!-- Cluster Broadcasting -->
           <div>
             <div class="flex items-center justify-between mb-2">
@@ -316,7 +346,7 @@ defmodule MyAppWeb.StreamSpeedLive do
               {broadcast_speed_status(@avg_broadcast_time)}
             </div>
           </div>
-          
+
     <!-- Overall Throughput -->
           <div>
             <div class="flex items-center justify-between mb-2">
@@ -336,7 +366,7 @@ defmodule MyAppWeb.StreamSpeedLive do
           </div>
         </div>
       </div>
-      
+
     <!-- Info Footer -->
       <div class="mt-6 text-center text-sm text-gray-500">
         <p>Monitoring PubSub broadcasts and GraphQL subscriptions across {length(@nodes)} nodes</p>
@@ -363,4 +393,10 @@ defmodule MyAppWeb.StreamSpeedLive do
   defp throughput_status(rate) when rate > 5, do: "📈 Moderate load"
   defp throughput_status(rate) when rate > 0, do: "📊 Light activity"
   defp throughput_status(_), do: "💤 Idle"
+
+  defp chunks_per_second(0.0), do: 0.0
+
+  defp chunks_per_second(avg_interval) when avg_interval > 0 do
+    1000 / avg_interval
+  end
 end
